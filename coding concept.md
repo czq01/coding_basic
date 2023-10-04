@@ -214,12 +214,18 @@ Y = F(_list_a)  # val = 2.5
 def add(a, b):
     return a+b
 
+def add1(a):
+    return a+1
+
+# 一个接受函数对象作为参数的函数
 def run(func, a, b):
-    return func(a, b)
+    val = func(a, b)   # 使用正确的参数Call function, 只有函数可以被Call
+    return val
 
 function = add             # 将函数对象赋值给function，此时function和add相等。add是一个变量，function也是一个变量，但同时他俩也有函数用法。
 val = function(1,2)        # val = 3
-val = run(function, 1, 2)  # val = fucntion(1,2) = 3
+val = run(function, 1, 2)  # val = 3  正确，根据run的定义，传入的func需接受两个参数
+val = run(add1, 1, 2)      # Error位于run的定义：func(a, b)。 传入的add1接受一个参数，却塞给他两个。  解决办法：传入一个接受两个参数的函数
 val = run(add, 1, 2)       # val = add(1,2) = 3
 
 ```
