@@ -167,19 +167,133 @@ def power(a, b):
 
 时间复杂度分析：对于冒泡排序，一个长度为N的列表，进行这样的排序则需要将每一个元素都和其他N-1个元素进行比较，总的比较次数为N(N-1)/2, 也即当N较大时，忽略低次项，执行所花费的时间近似和N^2线性相关，时间复杂度在O(N^2)等级。也就是说随着列表长度N的增长，排序时间以N^2的速度增长。
 
+对于一个长度为N的列表而言，算法如下：
+```pseudocode
+function bsort:
+    for i from 1 -> N:   #对于数列中每一个位置i
+        for j from i+1 -> N:    # 将第i值与其后i+1至N的所有值进行比较，争夺第i大的数值
+            if Array[i]>Array[j]:    # 当i值大于i+1值时进行比较
+                do swap Array[i] Array[j]    # 交换Array中第i和j的值
+            else
+                do nothing
+    # 因为操作直接对Array进行，因此Array自身已经改变，是否return意义不大。
+```
+
+其Python写法：
+
+```python
+
+def bsort(array: list) -> None:
+    size = len(array)
+    for i in range(size):
+        for j in range(i+1, size):
+            if (array[i]>array[j]):
+                tmp = array[i]
+                array[i] = array[j]
+                array[j] = tmp
+    return  # 这行写不写都行
+
+# 调用：
+array = [3,4,5,6,2,1]
+bsort(array)
+print(array)   # [1,2,3,4,5,6]
+```
+
 ##### 2.2.1.2 快速排序
 
-那么是否有速度更加快速的排序方式？答案是有。目前主流的排序方式，除去桶排序，最快的排序方式复杂度为O(n*log(n)).
-本文介绍常用的算法<strong>快速排序(Quick Sort)</strong>. 该算法的时间复杂度为O(nlogn).
+那么是否有速度更加快速的排序方式？答案是有。目前主流的排序方式，除去桶排序，最快的排序方式复杂度为O(n*log(n))。 本文介绍常用的算法<strong>快速排序(Quick Sort)</strong>. 该算法的时间复杂度为O(nlogn).
+
+这个算法的精髓在于二分。随意取数列`Arr=[...]`中首位或末尾数值i，和数列中所有数值比较，将小数放在该数前面，大数放在该数后面，等于随便放。得到数列`Arr[... i ...]`。随后将该数列以i为分界看作三部分，`Arr[...], i, Arr[...]`，然后再分别对前后两部分重复之前的做法，图解如下：
+
+```txt
+                    [Arr: N]
+                       |  (pass 1)
+         [Arr: N/2]  - i -  [Arr: N/2]
+             |  (pass 2)        | (pass 2)
+    [Arr:N/4] j [Arr:N/4] i [Arr:N/4] k [Arr:N/4]
+                     ......  (passes)
+    [Arr:1] [Arr:0] [Arr:1] .... [Arr:1]  [Arr:1]
+    最后合并即可
+```
+
+这个算法每一个pass涉及ArrayLength*ArrayNumber=N次比较，每一个pass完成后都有一个近似二分的操作，一共有log2(N)次pass操作，总的时间复杂度在O(N*log(N))的量级。比BubbleSort要省上不少时间。
+无需掌握细节。
 
 #### 2.2.2 Recursion 递归
+
+##### 递归与循环关系
+
+递归是代码中很重要的算法之一。递归是在函数内调用自身进行子运算的行为。递归可以解决有递推公式的算法。
+
+递归和循环是相辅相成的。不少算法都可以互相转换，因为很多循环本质就是一个遵循递推公式的过程。
+
+比如从1加到100，循环写法与递归写法分别是：
+
+```pseudocode
+# 循环 val = 1+2+3+...N
+function get_sum(N):
+    sum = 0
+    for i from 1->N:
+        sum += i
+    return sum
+
+# 递归 Val = a[N], 通项a[n] = a[n-1]+n, 初始项a[1] = 1
+function get_sum(n):
+    if n==1: then return 1
+    else then: return get_sum(n-1)+n
+```
+
+递归的执行过程则是严格按照代码执行顺序，先遇见先执行。函数内与函数外不互通。执行顺序示意：
+
+```txt
+对于这两个函数：
+function sum(n):
+    if n==1: then return 1
+    else then: return sum(n-1)+n
+
+function sum(n):
+    if n==1: then return 1
+    else then: return n+sum(n-1)
+
+sum(3)的执行顺序：
+第一个函数： sum(3) -> (sum(2)+3) -> (sum(1)+2) +3 -> (1+2)+3 -> 3+3 -> 6
+第二个函数:  sum(3) -> (3+sum(2)) -> 3 +(2+sum(1)) -> 3 +(2+1) -> 3+3 -> 6
+括号便是函数的范围，每次遇到函数调用便中断当前层进入下一层函数，下一层的函数作用域与上一层不互通，待完成计算后由return返回才能回到上一层继续之前的计算。
+
+```
+
+##### 递归执行顺序
+
+常见的递归范例就是斐波那契数列(Fibonacci sequence)。 递推公式`a[n] = a[n-1]+a[n-2]`。写递归代码要注意单列初始项，比如数列中`a[1]=1, a[2]=1`并不是由公式得出来的。
+
+求斐波那契数列第N项（从1开始计数）的算法如下：
+
+```pseudocode
+function get_fib(N):
+    if N==1 or N==2: then return 1  # 初始项
+    #else then do
+    return get_fib(N-1) + get_fib(N-2)
+```
+
+程序的执行过程如下：
+```txt
+get_fib(5) -> get_fib(4)+get_fib(3)
+           -> get_fib(3)+get_fib(2)+get_fib(3)
+           -> get_fib(2)+get_fib(1)+get_fib(2)+get_fib(3)
+           -> 1+get_fib(1)+get_fib(2)+get_fib(3)
+           -> 2+get_fib(2)+get_fib(3)
+           -> 3+get_fib(3)
+           -> 3+get_fib(2)+get_fib(1)
+           -> 4+get_fib(1)
+           -> 5
+```
 
 ### 2.3 Excercise 一些练习
 
 以下题目可以使用伪代码完成（没有固定语法，逻辑对即可）。答案在Answer.md中。
 
 1. 对于1.1.1 如果要求的并不是最值，而是均值，他的算法逻辑应该是怎么样的？ 他的Python代码是什么样的？(可选)
-
+2.
 
 ## 3 Python语言
 
